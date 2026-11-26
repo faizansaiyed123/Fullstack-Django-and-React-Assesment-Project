@@ -1,15 +1,26 @@
-name: Frontend dependency security verification
+name: Frontend dependency audit
 
 on:
   push:
     branches:
-      - fix/frontend-vite-security
+      - main
+    paths:
+      - frontend/package.json
+      - frontend/package-lock.json
+  pull_request:
+    branches:
+      - main
+    paths:
+      - frontend/package.json
+      - frontend/package-lock.json
+  schedule:
+    - cron: "29 4 * * 1"
 
 permissions:
   contents: read
 
 jobs:
-  frontend-security:
+  audit:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -30,9 +41,3 @@ jobs:
 
       - name: Check dependency advisories
         run: npm audit --audit-level=moderate
-
-      - name: Lint frontend
-        run: npm run lint
-
-      - name: Build frontend
-        run: npm run build
