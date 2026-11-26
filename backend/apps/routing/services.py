@@ -127,18 +127,27 @@ def _add_route_metrics(route: dict[str, Any]) -> None:
     route["recommendation_eligible"] = no_travel_miles == 0 and counts.get(UNKNOWN_RISK, 0) == 0
 
 def _recommend(routes: list[dict[str, Any]]) -> int | None:
-    eligible = [route for route in routes if route["recommendation_eligible"]]
-    if not eligible:
+    if not routes:
         return None
+    eligible = [route for route in routes if route.get("recommendation_eligible")]
+    pool = eligible if eligible else routes
     return sorted(
-        eligible,
-        key=lambda route: (route["severe_miles"], route["high_miles"], route["average_risk"], route["duration_s"]),
+        pool,
+        key=lambda route: (
+            route["no_travel_miles"],
+            route["severe_miles"],
+            route["high_miles"],
+            route["average_risk"] if route["average_risk"] is not None else 999.0,
+            route["duration_s"],
+        ),
     )[0]["id"]
 
 def _recommendation_note(routes: list[dict[str, Any]], recommended: int | None) -> str:
     if recommended is None:
         return "No route can be recommended because every available route contains No Travel or unverified weather."
     route = next(route for route in routes if route["id"] == recommended)
+    if not route.get("recommendation_eligible"):
+        return f"Route {recommended + 1} has the lowest overall exposure ({route['no_travel_miles']:.1f} no-travel miles, {route['severe_miles']:.1f} severe miles). Caution: Severe/No-Travel weather detected."
     return f"Route {recommended + 1} has {route['severe_miles']:.1f} severe miles, {route['high_miles']:.1f} high-risk miles, average risk {route['average_risk']:.2f}, and travel time {route['duration_s'] / 3600:.1f} hours."
 
 def _risk_intensity(risk: str) -> float | None:

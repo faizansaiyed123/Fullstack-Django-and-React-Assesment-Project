@@ -37,7 +37,7 @@ export function RouteForm({ loading, onSubmit }: RouteFormProps) {
       <label><span>Origin</span><input value={origin} onChange={(e) => setOrigin(e.target.value)} required placeholder="City or address" /></label>
       <label><span>Destination</span><input value={destination} onChange={(e) => setDestination(e.target.value)} required placeholder="City or address" /></label>
       <label><span>Departure</span><input type="datetime-local" value={departureTime} onChange={(e) => setDepartureTime(e.target.value)} required /></label>
-      <label><span>Load weight (lb)</span><input type="number" min={1} max={200000} step={100} value={loadWeight} onChange={(e) => setLoadWeight(Number(e.target.value))} required /></label>
+      <label><span>Load weight (lb)</span><input type="number" min={0} max={200000} step={100} value={loadWeight} onChange={(e) => setLoadWeight(Number(e.target.value))} required /></label>
       <label><span>Weather checkpoint interval</span><select value={samplingInterval} onChange={(e) => setSamplingInterval(Number(e.target.value))}><option value={10}>Every 10 miles</option><option value={25}>Every 25 miles</option><option value={50}>Every 50 miles</option></select></label>
       <button className="primary-button" type="submit" disabled={loading}>{loading ? "Planning…" : "Generate 3 routes"}</button>
     </form>
