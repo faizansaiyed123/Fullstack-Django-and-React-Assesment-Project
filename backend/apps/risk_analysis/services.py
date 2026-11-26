@@ -1,103 +1,64 @@
-RISK_LEVELS = ["Low", "Moderate", "High", "Severe", "No Travel"]
-RISK_RANK = {level: i for i, level in enumerate(RISK_LEVELS)}
+from __future__ import annotations
 
+from dataclasses import dataclass
+from typing import Mapping
 
-def classify_wind(mph):
-    if mph is None:
-        return None
-    if mph >= 55:
-        return "No Travel"
-    if mph >= 45:
-        return "Moderate" if False else "Severe" if mph <= 54 else "No Travel"
-    # clean
-    if mph >= 45:
-        return "Severe"
-    if mph >= 35:
-        return "High"
-    if mph >= 25:
-        return "Moderate"
+RISK_LEVELS = ("Low", "Moderate", "High", "Severe", "No Travel")
+RISK_RANK = {level: index for index, level in enumerate(RISK_LEVELS)}
+UNKNOWN_RISK = "Unable to verify"
+
+@dataclass(frozen=True)
+class WeatherRisk:
+    wind: str | None
+    rain: str | None
+    snow: str | None
+    overall: str
+
+def classify_wind(mph: float | None) -> str | None:
+    if mph is None: return None
+    if mph >= 55: return "No Travel"
+    if mph >= 45: return "Severe"
+    if mph >= 35: return "High"
+    if mph >= 25: return "Moderate"
     return "Low"
 
-
-def classify_wind_clean(mph):
-    if mph is None:
-        return None
-    if mph >= 55:
-        return "No Travel"
-    if mph >= 45:
-        return "Severe"
-    if mph >= 35:
-        return "High"
-    if mph >= 25:
-        return "Moderate"
+def classify_rain(in_per_hour: float | None) -> str | None:
+    if in_per_hour is None: return None
+    if in_per_hour > 1.0: return "No Travel"
+    if in_per_hour >= 0.5: return "Severe"
+    if in_per_hour >= 0.25: return "High"
+    if in_per_hour >= 0.10: return "Moderate"
     return "Low"
 
-
-def classify_rain(in_hr):
-    if in_hr is None:
-        return None
-    if in_hr > 1.00:
-        return "No Travel"
-    if in_hr > 0.50:
-        return "Severe"
-    if in_hr > 0.25:
-        return "High"
-    if in_hr >= 0.10:
-        return "Moderate"
+def classify_snow(in_per_hour: float | None) -> str | None:
+    if in_per_hour is None: return None
+    if in_per_hour > 3.0: return "No Travel"
+    if in_per_hour >= 2.0: return "Severe"
+    if in_per_hour >= 1.0: return "High"
+    if in_per_hour >= 0.5: return "Moderate"
     return "Low"
 
+def apply_load_rules(wind_risk: str | None, wind_mph: float | None, load_lb: float) -> str | None:
+    if wind_mph is None: return wind_risk
+    if wind_mph >= 55: return "No Travel"
+    if 45 <= wind_mph < 55 and load_lb > 30_000: return "No Travel"
+    if 35 <= wind_mph < 45 and load_lb > 40_000: return "Severe"
+    return wind_risk
 
-def classify_snow(in_hr):
-    if in_hr is None:
-        return None
-    if in_hr > 3.0:
-        return "No Travel"
-    if in_hr > 2.0:
-        return "Severe"
-    if in_hr > 1.0:
-        return "High"
-    if in_hr >= 0.5:
-        return "Moderate"
-    return "Low"
+def combine_risks(risks: list[str | None]) -> str:
+    if any(risk is None for risk in risks):
+        return UNKNOWN_RISK
+    return max((risk for risk in risks if risk is not None), key=RISK_RANK.__getitem__)
 
+def classify_checkpoint(weather: Mapping[str, float | int | None], load_lb: float) -> WeatherRisk:
+    wind_speed = _as_float(weather.get("wind_speed_mph"))
+    wind = apply_load_rules(classify_wind(wind_speed), wind_speed, load_lb)
+    rain = classify_rain(_as_float(weather.get("rain_in_hr")))
+    snow = classify_snow(_as_float(weather.get("snow_in_hr")))
+    return WeatherRisk(wind=wind, rain=rain, snow=snow, overall=combine_risks([wind, rain, snow]))
 
-def apply_load_rules(wind_risk, wind_mph, load_lb):
-    # returns adjusted risk level string
-    level = wind_risk
-    if wind_mph is None:
-        return level
-    if wind_mph >= 55:
-        return "No Travel"
-    if 45 <= wind_mph <= 54 and load_lb > 30000:
-        return "No Travel"
-    if 35 <= wind_mph <= 44 and load_lb > 40000:
-        # Severe
-        if RISK_RANK["Severe"] > RISK_RANK.get(level, 0):
-            level = "Severe"
-    return level
+def risk_score(level: str) -> int | None:
+    return RISK_RANK.get(level)
 
-
-def combine_risks(risks):
-    # highest applicable
-    best = "Low"
-    for r in risks:
-        if r is None:
-            continue
-        if RISK_RANK[r] > RISK_RANK[best]:
-            best = r
-    return best
-
-
-def risk_to_score(level):
-    return RISK_RANK.get(level, 0)
-
-
-def classify_checkpoint(weather, load_lb):
-    w = weather.get("wind_speed_mph")
-    r = weather.get("rain_in_hr")
-    s = weather.get("snow_in_hr")
-    wr = classify_wind_clean(w)
-    rr = classify_rain(r)
-    sr = classify_snow(s)
-    wr = apply_load_rules(wr, w, load_lb)
-    return combine_risks([wr, rr, sr])
+def _as_float(value: float | int | None) -> float | None:
+    return None if value is None else float(value)
