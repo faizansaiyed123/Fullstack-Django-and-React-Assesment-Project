@@ -1,5 +1,7 @@
 from unittest.mock import Mock, patch
 
+import requests
+
 from django.core.cache import cache
 from django.test import SimpleTestCase, override_settings
 
@@ -72,9 +74,9 @@ class WeatherServiceTests(SimpleTestCase):
     @patch("services.weather.weather_service.requests.get")
     def test_uses_bounded_exponential_backoff_after_connection_errors(self, mock_get, mock_sleep):
         mock_get.side_effect = [
-            ConnectionError("temporary network failure"),
-            ConnectionError("temporary network failure"),
-            ConnectionError("temporary network failure"),
+            requests.ConnectionError("temporary network failure"),
+            requests.ConnectionError("temporary network failure"),
+            requests.ConnectionError("temporary network failure"),
         ]
 
         with self.assertRaises(WeatherProviderError):

@@ -43,7 +43,7 @@ Keep real provider keys only in server-side environment variables.
 
 ## Render Free (native Python runtime)
 
-Set the backend service's Root Directory to \`backend\`.
+Set the backend service's Root Directory to `backend`.
 
 Build Command:
 
@@ -53,7 +53,7 @@ Start Command:
 
     gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --threads 1 --timeout 60
 
-The single worker and single thread keep this service's process-local weather cache shared by its request handler and avoid parallel weather-provider calls from this service process. Apply the same worker/thread settings to any custom Render start command.
+A single worker keeps Django's process-local cache in one worker process; a single thread also prevents concurrent request handlers from this service process. Apply the same worker/thread settings to any custom Render start command.
 
 ## Docker
 
