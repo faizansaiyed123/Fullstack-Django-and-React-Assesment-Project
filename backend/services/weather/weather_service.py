@@ -61,6 +61,8 @@ def _fetch_batch(points):
         "start_hour": start.strftime("%Y-%m-%dT%H:%M"),
         "end_hour": end.strftime("%Y-%m-%dT%H:%M"),
         "timezone": "UTC",
+        "wind_speed_unit": "mph",
+        "precipitation_unit": "mm",
     }
     response = _request_weather(params)
     try:
@@ -168,7 +170,7 @@ def _normalize_location(location, point):
             "lon_key": round(float(point["lon"]), 4),
             "when_key": _hour_key(_parse_datetime(timestamp)),
             "temperature_c": temp,
-            "wind_speed_mph": round(float(wind) * 2.236936, 2) if wind is not None else None,
+            "wind_speed_mph": round(float(wind), 2) if wind is not None else None,
             "rain_in_hr": round(float(rain_mm) / 25.4, 3) if rain_mm is not None else None,
             "snow_in_hr": round(float(snow_cm) / 2.54, 3) if snow_cm is not None else None,
             "forecast_time": timestamp,
