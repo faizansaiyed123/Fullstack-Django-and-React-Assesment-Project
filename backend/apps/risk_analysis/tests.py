@@ -25,3 +25,19 @@ class RiskServiceTests(SimpleTestCase):
     def test_missing_weather_is_not_low(self):
         risk = classify_checkpoint({"wind_speed_mph": None, "rain_in_hr": 0.0, "snow_in_hr": 0.0}, 25_000)
         self.assertEqual(risk.overall, UNKNOWN_RISK)
+
+
+    def test_known_no_travel_is_not_hidden_by_missing_weather(self):
+        risk = classify_checkpoint(
+            {"wind_speed_mph": 55, "rain_in_hr": None, "snow_in_hr": 0.0},
+            25_000,
+        )
+        self.assertEqual(risk.wind, "No Travel")
+        self.assertEqual(risk.overall, "No Travel")
+
+    def test_incomplete_weather_without_known_no_travel_remains_unverified(self):
+        risk = classify_checkpoint(
+            {"wind_speed_mph": 40, "rain_in_hr": None, "snow_in_hr": 0.0},
+            25_000,
+        )
+        self.assertEqual(risk.overall, UNKNOWN_RISK)

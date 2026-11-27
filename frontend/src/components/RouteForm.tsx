@@ -160,7 +160,7 @@ export function RouteForm({ loading, onSubmit }: RouteFormProps) {
         <label className="field-group">
           <span className="field-label">Truck load weight</span>
           <span className="input-shell unit-input-shell">
-            <input type="number" min={0} max={200000} step={100} value={loadWeight} onChange={(event) => setLoadWeight(Number(event.target.value))} required />
+            <input type="number" min={1} max={200000} step={1} value={loadWeight} onChange={(event) => setLoadWeight(Number(event.target.value))} required />
             <span className="input-unit">LB</span>
           </span>
           <span className="field-hint">Used to evaluate load-sensitive weather risk.</span>

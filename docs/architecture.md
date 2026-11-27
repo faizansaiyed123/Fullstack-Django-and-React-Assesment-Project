@@ -41,7 +41,7 @@ Backend boundaries:
 
 Failure strategy:
 
-The application never creates fake routes or fake weather data. A route set is usable only when three distinct routes can be produced. A checkpoint with missing weather is marked Unable to verify. Routes containing No Travel or unverified weather remain visible for transparency but cannot be recommended.
+The application never creates fake routes or fake weather data. A route set is returned only when exactly three geometry-distinct routes can be produced; otherwise the route-planning endpoint fails explicitly. A known No Travel condition remains No Travel even when another weather variable is missing. Other incomplete checkpoint weather is marked Unable to verify. Any route containing a No Travel or unverified checkpoint, including at the destination, remains visible for transparency but cannot be recommended. If every route is ineligible, the response contains no recommended route.
 
 Performance strategy:
 

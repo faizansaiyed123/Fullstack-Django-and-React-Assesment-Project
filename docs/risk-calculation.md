@@ -43,7 +43,7 @@ Open-Meteo rain is used for rain classification. Total precipitation is not subs
 - 45–<55 mph and load >30,000 lb → No Travel
 - 35–<45 mph and load >40,000 lb → Severe
 
-Final checkpoint risk is the highest applicable condition risk. Missing data produces Unable to verify.
+Final checkpoint risk is the highest applicable condition risk when all three required weather values are present. A known No Travel condition takes precedence over missing values in other conditions because it is already a definitive stop condition. Otherwise, if any required wind, rain, or snow value is missing, the overall checkpoint risk is Unable to verify.
 
 ## Route metrics
 
@@ -63,4 +63,4 @@ Among eligible routes, sort lexicographically:
 3. Lowest weighted average risk
 4. Shortest travel time
 
-A route with any No Travel mileage or any unverified checkpoint is excluded from recommendation and remains visible to the user.
+A route with any No Travel checkpoint or any unverified checkpoint is excluded from recommendation and remains visible to the user. This check includes the destination checkpoint even though the destination checkpoint has zero remaining segment miles. No Travel mileage remains a segment-based exposure metric and is not used as the sole safety-eligibility check.

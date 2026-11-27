@@ -41,6 +41,8 @@ class WeatherServiceTests(SimpleTestCase):
         self.assertEqual(first_result, second_result)
         self.assertEqual(mock_get.call_count, 1)
         self.assertTrue(first_result[0]["weather"]["available"])
+        self.assertEqual(mock_get.call_args.kwargs["params"]["wind_speed_unit"], "mph")
+        self.assertEqual(first_result[0]["weather"]["wind_speed_mph"], 10.0)
 
     @override_settings(
         WEATHER_MAX_RETRIES=2,

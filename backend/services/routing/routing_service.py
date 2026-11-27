@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from dataclasses import dataclass
 from typing import Any
 
 import requests
 from django.conf import settings
 from django.core.cache import cache
+
+from services.routing.checkpoint_service import cumulative_geometry, interpolate_at_distance
 
 class RoutingProviderError(RuntimeError):
     pass
@@ -42,18 +45,34 @@ def get_routes(origin, destination):
     # If we still have fewer than 3 routes, generate distinct waypoint alternatives using OSRM
     if len(routes) < 3:
         try:
-            routes.extend(_fetch_waypoint_alternatives(origin, destination, needed=3 - len(routes)))
+            routes.extend(
+                _fetch_waypoint_alternatives(
+                    origin,
+                    destination,
+                    needed=3 - len(routes),
+                    existing_routes=routes,
+                )
+            )
             routes = _deduplicate(routes)
         except Exception as exc:
             errors.append(f"Waypoint alternatives failed: {exc}")
 
-    if len(routes) < 1:
-        detail = "; ".join(errors) if errors else "routing provider returned no routes"
-        raise RoutingProviderError(f"Unable to generate any routes. {detail}")
+    if len(routes) < 3:
+        detail = "; ".join(errors)
+        message = f"Unable to generate three distinct routes (received {len(routes)})."
+        if detail:
+            message = f"{message} {detail}"
+        raise RoutingProviderError(message)
+
     return routes[:3]
 
-def _fetch_waypoint_alternatives(origin, destination, needed=2):
+def _fetch_waypoint_alternatives(origin, destination, needed=2, existing_routes=None):
     alternatives = []
+    seen_signatures = {
+        signature
+        for route in (existing_routes or [])
+        if (signature := _geometry_signature(route)) is not None
+    }
     mx = (origin[0] + destination[0]) / 2.0
     my = (origin[1] + destination[1]) / 2.0
     dx = destination[0] - origin[0]
@@ -85,8 +104,11 @@ def _fetch_waypoint_alternatives(origin, destination, needed=2):
                     "osrm-alt",
                 )
                 if normalized:
-                    alternatives.append(normalized)
-                    break
+                    signature = _geometry_signature(normalized)
+                    if signature is not None and signature not in seen_signatures:
+                        alternatives.append(normalized)
+                        seen_signatures.add(signature)
+                        break
         except requests.RequestException:
             continue
     return alternatives
@@ -168,23 +190,41 @@ def _normalize_route(coordinates: Any, summary: dict[str, Any], provider: str):
     geometry = [[float(point[0]), float(point[1])] for point in coordinates if len(point) >= 2]
     return RouteAlternative(geometry, distance_m, duration_s, provider) if len(geometry) >= 2 else None
 
+def _geometry_signature(route):
+    try:
+        cumulative = cumulative_geometry(route.geometry)
+    except (IndexError, TypeError, ValueError, OverflowError):
+        return None
+
+    total_distance_m = cumulative[-1].distance_m
+    if not math.isfinite(total_distance_m) or total_distance_m <= 0:
+        return None
+
+    sample_count = 21
+    return tuple(
+        (
+            round(point.coordinate[0], 3),
+            round(point.coordinate[1], 3),
+        )
+        for index in range(sample_count)
+        for point in [
+            interpolate_at_distance(
+                cumulative,
+                total_distance_m * index / (sample_count - 1),
+            )
+        ]
+    )
+
+
 def _deduplicate(routes):
-    seen = set()
+    seen_signatures = set()
     unique = []
     for route in routes:
-        signature = hashlib.sha256(
-            json.dumps(
-                {
-                    "distance": round(route.distance_m, -1),
-                    "duration": round(route.duration_s, -1),
-                    "geometry": route.geometry[::max(1, len(route.geometry) // 20)],
-                },
-                separators=(",", ":"),
-            ).encode("utf-8")
-        ).hexdigest()
-        if signature not in seen:
-            seen.add(signature)
-            unique.append(route)
+        signature = _geometry_signature(route)
+        if signature is None or signature in seen_signatures:
+            continue
+        seen_signatures.add(signature)
+        unique.append(route)
     return unique
 
 def _cache_key(provider, origin, destination):
