@@ -27,7 +27,7 @@ Request:
 
 Response includes:
 - normalized origin/destination
-- exactly three distinct routes
+- exactly three geometry-distinct routes; if three cannot be generated, the endpoint returns HTTP 502 instead of returning a partial route set
 - provider and route geometry
 - distance, duration, arrival time
 - true cumulative checkpoint distances
@@ -36,7 +36,7 @@ Response includes:
 - severe/high/no-travel mileage
 - weighted average risk
 - recommendation eligibility
-- recommended route ID or null
+- recommended route ID or null; it is null and all route recommended flags are false when every route contains a No Travel or unverified checkpoint
 - heatmap corridor coordinates
 
 Validation:
@@ -57,12 +57,12 @@ Request:
       ]
     }
 
-The forecast offset is restricted to 0–48 hours. The endpoint returns each corridor point's weather and risk classification at the requested forecast time.
+The forecast offset is restricted to 0–48 hours. The endpoint evaluates each corridor point at departure time plus the requested offset. Open-Meteo hourly values are matched to the nearest hour; this is an hourly forecast lookup, not sub-hour weather interpolation.
 
 ## Error responses
 
 - 400: invalid input
 - 422: geocoding failure
-- 502: routing/provider failure
+- 502: routing/provider failure, including when fewer than three distinct route alternatives can be generated
 - 503: weather verification failure
 - 500: unexpected server failure, with the exception logged server-side
