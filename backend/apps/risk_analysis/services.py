@@ -46,6 +46,8 @@ def apply_load_rules(wind_risk: str | None, wind_mph: float | None, load_lb: flo
     return wind_risk
 
 def combine_risks(risks: list[str | None]) -> str:
+    if any(risk == "No Travel" for risk in risks):
+        return "No Travel"
     if any(risk is None for risk in risks):
         return UNKNOWN_RISK
     return max((risk for risk in risks if risk is not None), key=RISK_RANK.__getitem__)
