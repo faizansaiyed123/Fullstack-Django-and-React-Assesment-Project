@@ -47,7 +47,7 @@ def sample_route(geometry, interval_miles):
     targets = [0.0]
     target = interval_m
     total = cumulative[-1].distance_m
-    while target < total:
+    while target < total - 1e-6:
         targets.append(target); target += interval_m
     if total > 0: targets.append(total)
     return [interpolate_at_distance(cumulative, target) for target in targets]
