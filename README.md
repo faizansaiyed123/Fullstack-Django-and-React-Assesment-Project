@@ -11,7 +11,7 @@ It then:
 2. Requests three distinct route alternatives from HeiGIT OpenRouteService, using OSRM as a routing fallback.
 3. Samples checkpoints at true cumulative route distances.
 4. Estimates truck ETA at every checkpoint from cumulative distance and route travel time.
-5. Fetches weather in batches from Open-Meteo.
+5. Fetches hourly weather in batches from Open-Meteo, requesting wind speed in mph and preserving the documented rain/snowfall source units before conversion.
 6. Applies the exact wind, rain, snow, and load thresholds from the assessment.
 7. Calculates Severe, High, and No Travel mileage from checkpoint segments.
 8. Recommends the eligible route using Severe miles → High miles → weighted average risk → travel time.
@@ -22,9 +22,10 @@ It then:
 
 The application does not invent data to make a demo look healthy:
 - A routing provider failure never becomes a fake straight-line route.
-- If fewer than three distinct routes can be verified, the API returns a clear routing error.
-- Missing weather is shown as Unable to verify rather than Low.
-- Routes with No Travel mileage or unverified weather remain visible but are excluded from recommendation.
+- The API returns exactly three geometry-distinct routes or a clear routing error; it never presents one or two routes as a complete result.
+- Missing weather is shown as Unable to verify rather than Low. A known No Travel condition takes precedence over missing values in other weather variables.
+- Any route with a No Travel checkpoint (including the destination checkpoint) or an unverified checkpoint remains visible but is excluded from recommendation.
+- If no route is eligible, no route is recommended and recommended_route_id is null.
 - Provider failures are logged server-side while the browser receives safe error messages.
 
 ## Stack
