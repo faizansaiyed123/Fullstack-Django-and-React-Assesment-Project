@@ -318,11 +318,59 @@
 
 .select-input-shell {
   position: relative;
+  padding-right: 11px;
+  border-color: #d6e6e3;
+  background: linear-gradient(135deg, #fbfefd 0%, #f3f8f7 100%);
+  cursor: pointer;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
+}
+
+.select-input-shell:hover {
+  border-color: #a8cbc5;
+  background: #ffffff;
+}
+
+.select-input-shell:focus-within {
+  border-color: #6eaaa3;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(20, 125, 121, 0.11);
 }
 
 .select-input-shell select {
   appearance: none;
   cursor: pointer;
+  padding-right: 8px;
+  color: #244454;
+  font-size: 0.82rem;
+  font-weight: 680;
+  letter-spacing: -0.01em;
+  color-scheme: light;
+}
+
+.select-input-shell select:focus-visible {
+  outline: none;
+}
+
+.select-input-shell select option {
+  background: #ffffff;
+  color: #30485a;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.select-input-shell svg {
+  pointer-events: none;
+  transition: color 150ms ease, transform 150ms ease;
+}
+
+.select-input-shell:hover svg,
+.select-input-shell:focus-within svg {
+  color: var(--teal);
+}
+
+.select-input-shell:focus-within svg {
+  transform: rotate(180deg);
 }
 
 .field-hint {
