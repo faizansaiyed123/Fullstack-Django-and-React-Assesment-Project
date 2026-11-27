@@ -111,7 +111,6 @@ export default function App() {
           <p className="breadcrumb">WORKSPACE <span>/</span> ROUTE PLANNER</p>
           <h1>Route planner</h1>
         </div>
-        <p className="page-heading-note">Compare routes. Understand risk. Make the call.</p>
       </section>
 
       <section className="workspace">
